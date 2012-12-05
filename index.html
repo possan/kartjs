@@ -16,54 +16,118 @@
 	function movement() {
 		var t1 = (new Date()).getTime();
 		time = (t1-t0) / 1000.0;
-		player.x = 128 + 32 * Math.sin(time * 1.3);
-		player.y = 128 + 32 * Math.sin(time * 1.1);
-		player.direction = 360 * Math.sin(time / 6.0);
+		player.x = 128;// + 78 * Math.sin(time * 1.3);
+		player.y = 128;// + 78 * Math.cos(time * 1.1);
+		// player.direction = 360 * Math.sin(time / 6.0);
+		player.direction = time * 30;
 		console.log(player);
 	}
 
 	var floorcanvas = document.getElementById('floorcanvas');
 	var mapcanvas = document.getElementById('mapcanvas');
 
-	var img1 = new Image('texture1.jpg');
+	var img1 = new Image();
+	img1.setAttribute('src', 'texture1.jpg');
 	var texturepixels = [];
 	img1.addEventListener('load', function(){
 		var texturecanvas = document.getElementById('texturecanvas')
 		var texturecontext = texturecanvas.getContext('2d')
-		texturecontext.draw(img1, 0, 0);
-		var texturedata = texturecanvas.getImageData(0, 0, 256, 256);
+		texturecontext.drawImage(img1, 0, 0);
+		var texturedata = texturecontext.getImageData(0, 0, 256, 256);
 		texturepixels = texturedata.data;
 	})
 
 	var floorcontext = floorcanvas.getContext('2d');
 	var mapcontext = mapcanvas.getContext('2d');
 
-	function texline(target, x, y, width, u0,v0, u1,v1) {
-		var o = y * target.width * 4;
-		for (var i=0; i<width*4; i++) {
- 			target.data[o] = Math.floor(Math.random() * 255);
- 			o ++;
+	function texline(target, x, y, width, u0,v0, u1,v1, bri) {
+		var o = (y * target.width) << 2;
+		var u = u0;
+		var v = v0;
+		var ud = (u1 - u0) / width;
+		var vd = (v1 - v0) / width;
+		var i = width;
+		while(i--) {
+			var uc = (Math.floor(u) + 512) % 256;
+			var vc = (Math.floor(v) + 512) % 256;
+			var o2 = ((vc * 256)+uc) * 4;
+ 			target.data[o++] = (texturepixels[o2++] * bri) >> 8;
+ 			target.data[o++] = (texturepixels[o2++] * bri) >> 8;
+ 			target.data[o++] = (texturepixels[o2++] * bri) >> 8;
+ 			target.data[o++] = 255;
+ 			u += ud;
+ 			v += vd;
  		}
 	}
 
 	function renderfloor() {
 		var data = floorcontext.getImageData(0,0,320,240);
-		for (var i=0; i<320*240*4; i++)
+
+		for (var i=0; i<320*100*4; i++)
 			data.data[i] = Math.floor(Math.random() * 255);
+
+		var lines = 150;
+		var fov = 45;
+		var nearz = 50;
+		var zspread = 11;
+		var up = 25;
+
+		for (var i=0; i<lines; i++) {
+			var inorm = i / lines;
+			var bri = 255 - i * 1;
+			var y = 240 - i;
+
+			var a0 = player.direction - fov;
+			var a1 = player.direction + fov;
+
+			var z = nearz + zspread * i;
+			var d = Math.sqrt((up*up) + (z*z));
+
+			var w = z;//100 * Math.cos(d * Math.PI / 1);// * (100 / d);// / (d + 10);// nearz + (normz * (farz - nearz));
+
+			var uc = player.x + z * Math.cos(player.direction * Math.PI / 180.0);
+			var vc = player.y + z * Math.sin(player.direction * Math.PI / 180.0);
+
+			var u0 = uc + (w * Math.cos(a0 * Math.PI / 180));
+			var v0 = vc + (w * Math.sin(a0 * Math.PI / 180));
+
+			var u1 = uc + (w * Math.cos(a1 * Math.PI / 180));
+			var v1 = vc + (w * Math.sin(a1 * Math.PI / 180));
+
+			texline(data, 0, y, 320, u0,v0, u1,v1, bri);
+		}
+
 		floorcontext.putImageData(data, 0, 0);
 	}
 
 	function rendermap() {
 		var data = mapcontext.getImageData(0,0,100,100);
 		// for (var i=0; i<100*100*4; i++)
-		//	data.data[i] = Math.floor(Math.random() * 255);
+		//	data.data[i] = Math.floor(Math.random() * 255);'
+		var fov = 45;
+		var rr = 150 + 125 * Math.sin(time * 3.0);
+		var rr2 = 150 + 125 * Math.cos(time * 2.6);
 		for (var i=0; i<100; i++) {
-			var rr = 50 + 25 * Math.sin(i + t);
-			var u0 = player.x - rr;
-			var v0 = player.y - rr;
-			var u1 = player.x - rr;
-			var v1 = player.y - rr;
-			texline(data, 0,i, 100, u0,v0, u1,v1);
+			var bri = 255 - i * 2;
+
+			var uc = player.x + (i * Math.cos(player.direction * Math.PI / 180.0));
+			var vc = player.y + (i * Math.sin(player.direction * Math.PI / 180.0));
+
+			var ux = 64 * Math.cos((player.direction + 90) * Math.PI / 180.0);
+			var vx = 64 * Math.sin((player.direction + 90) * Math.PI / 180.0);
+
+			var y = 100 - i;
+
+			var a0 = player.direction - fov;
+			var a1 = player.direction + fov;
+
+			var u0 = uc - ux;
+			var v0 = vc - vx;
+			
+			var u1 = uc + ux;
+			var v1 = vc + vx;
+
+			texline(data, 0, 99 - i, 100, u0,v0, u1,v1, bri);
 		}
 		mapcontext.putImageData(data, 0, 0);
 	}
