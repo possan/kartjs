@@ -16,18 +16,19 @@
 	function movement() {
 		var t1 = (new Date()).getTime();
 		time = (t1-t0) / 1000.0;
-		player.x = 128;// + 78 * Math.sin(time * 1.3);
+		player.x = 128 + 78 * Math.sin(time * 1.3);
 		player.y = 128;// + 78 * Math.cos(time * 1.1);
 		// player.direction = 360 * Math.sin(time / 6.0);
-		player.direction = time * 30;
-		console.log(player);
+		player.direction = time * 10;
+		// time * 30;
+		// console.log(player);
 	}
 
 	var floorcanvas = document.getElementById('floorcanvas');
 	var mapcanvas = document.getElementById('mapcanvas');
 
 	var img1 = new Image();
-	img1.setAttribute('src', 'texture1.jpg');
+	img1.setAttribute('src', 'debug.png');
 	var texturepixels = [];
 	img1.addEventListener('load', function(){
 		var texturecanvas = document.getElementById('texturecanvas')
@@ -60,41 +61,100 @@
  		}
 	}
 
+	function planeuv(dx, dy, dz) {
+		var dl = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+		var direction = {
+			x: dx / dl,
+			y: dy / dl,
+			z: dz / dl
+		};
+
+		var origin = {
+			x: 0,
+			y: 45 + 35 * Math.sin(time),
+			z: 00
+		};
+
+		var pointOnPlane = {
+			x: 0,
+			y: 0,
+			z: 0
+		}
+
+		var planeNormal = {
+			x: 0,
+			y: -1,
+			z: 0
+		}
+
+		var a = direction.x * planeNormal.x
+				+ direction.y * planeNormal.y
+				+ direction.z * planeNormal.z;
+
+    var t = ((pointOnPlane.x * planeNormal.x
+    	+ pointOnPlane.y * planeNormal.y
+    	+ pointOnPlane.z * planeNormal.z
+    	- planeNormal.x * origin.x
+    	- planeNormal.y * origin.y
+    	- planeNormal.z * origin.z)) / a;
+
+    var P = {
+			x: origin.x + (t * direction.x),
+			y: origin.y + (t * direction.y),
+			z: origin.z + (t * direction.z),
+		};
+
+		return {
+			u: P.x,
+			v: P.z
+		}
+	}
+
+	function rotateuv(uv, r) {
+		var a = r * Math.PI / 180.0;
+		var u2 = uv.u * Math.sin(a) - uv.v * Math.cos(a);
+		var v2 = uv.u * Math.cos(a) + uv.v * Math.sin(a);
+		return {
+			u: u2,
+			v: v2
+		}
+	}
+
+	function offsetuv(uv, delta) {
+		uv.u += delta.u;
+		uv.v += delta.v;
+		return uv;
+	}
+
 	function renderfloor() {
 		var data = floorcontext.getImageData(0,0,320,240);
 
-		for (var i=0; i<320*100*4; i++)
+/*
+		for (var i=0; i<320*120*4; i++)
 			data.data[i] = Math.floor(Math.random() * 255);
-
-		var lines = 150;
+*/
+		var lines = 120;
 		var fov = 45;
 		var nearz = 50;
 		var zspread = 11;
 		var up = 25;
 
 		for (var i=0; i<lines; i++) {
-			var inorm = i / lines;
+			// var inorm = i / lines;
 			var bri = 255 - i * 1;
 			var y = 240 - i;
 
-			var a0 = player.direction - fov;
-			var a1 = player.direction + fov;
+			var uv0 = planeuv(-100, lines-i, -100);
+			var uv1 = planeuv(100, lines-i, -100);
 
-			var z = nearz + zspread * i;
-			var d = Math.sqrt((up*up) + (z*z));
+			uv0 = rotateuv(uv0, -player.direction-180);
+			uv1 = rotateuv(uv1, -player.direction-180);
 
-			var w = z;//100 * Math.cos(d * Math.PI / 1);// * (100 / d);// / (d + 10);// nearz + (normz * (farz - nearz));
+			uv0 = offsetuv(uv0, { u: player.x, v: player.y });
+			uv1 = offsetuv(uv1, { u: player.x, v: player.y });
 
-			var uc = player.x + z * Math.cos(player.direction * Math.PI / 180.0);
-			var vc = player.y + z * Math.sin(player.direction * Math.PI / 180.0);
-
-			var u0 = uc + (w * Math.cos(a0 * Math.PI / 180));
-			var v0 = vc + (w * Math.sin(a0 * Math.PI / 180));
-
-			var u1 = uc + (w * Math.cos(a1 * Math.PI / 180));
-			var v1 = vc + (w * Math.sin(a1 * Math.PI / 180));
-
-			texline(data, 0, y, 320, u0,v0, u1,v1, bri);
+			texline(data, 0, y, 320, uv0.u, uv0.v, uv1.u, uv1.v, bri);
 		}
 
 		floorcontext.putImageData(data, 0, 0);
@@ -102,16 +162,15 @@
 
 	function rendermap() {
 		var data = mapcontext.getImageData(0,0,100,100);
-		// for (var i=0; i<100*100*4; i++)
-		//	data.data[i] = Math.floor(Math.random() * 255);'
+
 		var fov = 45;
 		var rr = 150 + 125 * Math.sin(time * 3.0);
 		var rr2 = 150 + 125 * Math.cos(time * 2.6);
 		for (var i=0; i<100; i++) {
 			var bri = 255 - i * 2;
 
-			var uc = player.x + (i * Math.cos(player.direction * Math.PI / 180.0));
-			var vc = player.y + (i * Math.sin(player.direction * Math.PI / 180.0));
+			var uc = player.x + ((i-25) * Math.cos(player.direction * Math.PI / 180.0));
+			var vc = player.y + ((i-25) * Math.sin(player.direction * Math.PI / 180.0));
 
 			var ux = 64 * Math.cos((player.direction + 90) * Math.PI / 180.0);
 			var vx = 64 * Math.sin((player.direction + 90) * Math.PI / 180.0);
@@ -123,7 +182,7 @@
 
 			var u0 = uc - ux;
 			var v0 = vc - vx;
-			
+
 			var u1 = uc + ux;
 			var v1 = vc + vx;
 
@@ -138,10 +197,10 @@
 		rendermap();
 	}
 
-	if (window.requestAnimationFrame)
-		window.requestAnimationFrame(frame);
-	else
-		setInterval(frame, 15);
+//	if (window.requestAnimationFrame)
+//		window.requestAnimationFrame(frame);
+//	else
+	setInterval(frame, 15);
 
 </script>
 
