@@ -1,0 +1,85 @@
+<html>
+<body>
+
+	<canvas id="floorcanvas" width="320" height="240"></canvas>
+
+	<canvas id="mapcanvas" width="100" height="100"></canvas>
+	<canvas id="texturecanvas" width="256" height="256"></canvas>
+
+<script>
+
+	var player = { x: 64, y: 64, direction: 0 }
+
+	var t0 = (new Date()).getTime();
+	var time = 0;
+
+	function movement() {
+		var t1 = (new Date()).getTime();
+		time = (t1-t0) / 1000.0;
+		player.x = 128 + 32 * Math.sin(time * 1.3);
+		player.y = 128 + 32 * Math.sin(time * 1.1);
+		player.direction = 360 * Math.sin(time / 6.0);
+		console.log(player);
+	}
+
+	var floorcanvas = document.getElementById('floorcanvas');
+	var mapcanvas = document.getElementById('mapcanvas');
+
+	var img1 = new Image('texture1.jpg');
+	var texturepixels = [];
+	img1.addEventListener('load', function(){
+		var texturecanvas = document.getElementById('texturecanvas')
+		var texturecontext = texturecanvas.getContext('2d')
+		texturecontext.draw(img1, 0, 0);
+		var texturedata = texturecanvas.getImageData(0, 0, 256, 256);
+		texturepixels = texturedata.data;
+	})
+
+	var floorcontext = floorcanvas.getContext('2d');
+	var mapcontext = mapcanvas.getContext('2d');
+
+	function texline(target, x, y, width, u0,v0, u1,v1) {
+		var o = y * target.width * 4;
+		for (var i=0; i<width*4; i++) {
+ 			target.data[o] = Math.floor(Math.random() * 255);
+ 			o ++;
+ 		}
+	}
+
+	function renderfloor() {
+		var data = floorcontext.getImageData(0,0,320,240);
+		for (var i=0; i<320*240*4; i++)
+			data.data[i] = Math.floor(Math.random() * 255);
+		floorcontext.putImageData(data, 0, 0);
+	}
+
+	function rendermap() {
+		var data = mapcontext.getImageData(0,0,100,100);
+		// for (var i=0; i<100*100*4; i++)
+		//	data.data[i] = Math.floor(Math.random() * 255);
+		for (var i=0; i<100; i++) {
+			var rr = 50 + 25 * Math.sin(i + t);
+			var u0 = player.x - rr;
+			var v0 = player.y - rr;
+			var u1 = player.x - rr;
+			var v1 = player.y - rr;
+			texline(data, 0,i, 100, u0,v0, u1,v1);
+		}
+		mapcontext.putImageData(data, 0, 0);
+	}
+
+	function frame() {
+		movement();
+		renderfloor();
+		rendermap();
+	}
+
+	if (window.requestAnimationFrame)
+		window.requestAnimationFrame(frame);
+	else
+		setInterval(frame, 15);
+
+</script>
+
+</body>
+</html>
