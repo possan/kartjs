@@ -18,12 +18,6 @@ body {
 		overflow: hidden;
 	}
 
-	canvas#mapcanvas {
-		position: absolute;
-		right: 0px;
-		top: 0px;
-	} 
-
 	.screen ul {
 		position: absolute;
 		list-style: none;
@@ -48,7 +42,7 @@ body {
 <body>
 
 	<div class="screen">
-		<canvas id="floorcanvas" width="320" height="240"></canvas>
+		<canvas id="floorcanvas" width="640" height="240"></canvas>
 		<ul id="spritehost">
 			<img id="sprite0" src="debugsprite.png" />
 			<img id="sprite1" src="debugsprite.png" />
@@ -65,12 +59,11 @@ body {
 		</ul>
 	</div>
 
-	<canvas id="mapcanvas" width="100" height="100"></canvas>
-	<xcanvas id="texturecanvas" width="256" height="256"></xcanvas>
-
 <script>
 
 	var kart = new KartRenderer();
+	kart.width = 640;
+	kart.height = 240;
 
 	var player = { x: 64, y: 64, direction: 0 }
 
@@ -156,9 +149,6 @@ body {
 	var floorcanvas = document.getElementById('floorcanvas');
 	var floorcontext = floorcanvas.getContext('2d');
 
-	var mapcanvas = document.getElementById('mapcanvas');
-	var mapcontext = mapcanvas.getContext('2d');
-
 	var img1 = new Image();
 	img1.setAttribute('src', 'debug.png');
 	var texturepixels = [];
@@ -189,7 +179,6 @@ body {
 	function frame() {
 		movement();
 		kart.render(floorcontext);
-		kart.renderMap(mapcontext);
 		positionsprites();
 		if (window.requestAnimationFrame)
 			window.requestAnimationFrame(frame);

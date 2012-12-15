@@ -134,29 +134,6 @@
 		context.putImageData(data, 0, 0);
 	}
 
-	KartRenderer.prototype.renderMap = function(context) {
-		var data = context.getImageData(0,0,100,100);
-		var fov = 45;
-		var rr = 150 + 125 * Math.sin(time * 3.0);
-		var rr2 = 150 + 125 * Math.cos(time * 2.6);
-		for (var i=0; i<100; i++) {
-			var bri = 255 - i * 2;
-			var uc = this.player.x + ((i-50) * Math.cos(this.player.direction * Math.PI / 180.0));
-			var vc = this.player.y + ((i-50) * Math.sin(this.player.direction * Math.PI / 180.0));
-			var ux = 64 * Math.cos((this.player.direction + 90) * Math.PI / 180.0);
-			var vx = 64 * Math.sin((this.player.direction + 90) * Math.PI / 180.0);
-			var y = 100 - i;
-			var a0 = this.player.direction - fov;
-			var a1 = this.player.direction + fov;
-			var u0 = uc - ux;
-			var v0 = vc - vx;
-			var u1 = uc + ux;
-			var v1 = vc + vx;
-			this._texline(data, 0, 99 - i, 100, u0,v0, u1,v1, bri);
-		}
-		context.putImageData(data, 0, 0);
-	}
-
 	KartRenderer.prototype.project = function(x, y, z) {
 		var uv0 = {
 			u: x,
