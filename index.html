@@ -11,10 +11,8 @@ body {
 
 	.screen {
 		position: absolute;
-		height: 240px;
 		left: 0px;
 		top: 0px;
-		width: 320px;
 		overflow: hidden;
 	}
 
@@ -42,7 +40,7 @@ body {
 <body>
 
 	<div class="screen">
-		<canvas id="floorcanvas" width="640" height="240"></canvas>
+		<canvas id="floorcanvas" width="640" height="360"></canvas>
 		<ul id="spritehost">
 			<img id="sprite0" src="debugsprite.png" />
 			<img id="sprite1" src="debugsprite.png" />
@@ -63,7 +61,7 @@ body {
 
 	var kart = new KartRenderer();
 	kart.width = 640;
-	kart.height = 240;
+	kart.height = 360;
 
 	var player = { x: 64, y: 64, direction: 0 }
 

@@ -64,11 +64,11 @@
 		}
 	}
 
-	var zmul = 120;
-	var zadd = 0;
-	var zzmul = 1;
-
 	KartRenderer.prototype._project = function(p, head) {
+		var zmul = this.height / 2;
+		var zadd = 0;
+		var zzmul = 1;
+
 		var mul = zmul / (zadd + p.z * zzmul);
 		var x = p.x * mul;
 		var y = (p.y + head) * mul;
@@ -117,19 +117,19 @@
 	}
 
 	KartRenderer.prototype.render = function(context) {
-		var data = context.getImageData(0,0,320,240);
-		var lines = 120;
+		var data = context.getImageData(0,0,this.width,this.height);
+		var lines = this.height / 2;
 		for (var i=0; i<lines; i++) {
 			// var inorm = i / lines;
-			var bri = 255 - i * 1.7;
-			var y = 240 - i;
-			var uv0 = this._planeuv(-160, lines-i, -120, this.player.z);
-			var uv1 = this._planeuv(160, lines-i, -120, this.player.z);
+			var bri = 255 - i * 1;
+			var y = this.height - i;
+			var uv0 = this._planeuv(-this.width / 2, lines-i, -this.height / 2, this.player.z);
+			var uv1 = this._planeuv(this.width / 2, lines-i, -this.height / 2, this.player.z);
 			uv0 = this._rotateuv(uv0, -this.player.direction-180);
 			uv1 = this._rotateuv(uv1, -this.player.direction-180);
 			uv0 = this._offsetuv(uv0, { u: this.player.x, v: this.player.y });
 			uv1 = this._offsetuv(uv1, { u: this.player.x, v: this.player.y });
-			this._texline(data, 0, y, 320, uv0.u, uv0.v, uv1.u, uv1.v, bri);
+			this._texline(data, 0, y, this.width, uv0.u, uv0.v, uv1.u, uv1.v, bri);
 		}
 		context.putImageData(data, 0, 0);
 	}
@@ -152,8 +152,8 @@
 		var sp = this._project(world, this.player.z);
 		var	x = sp.x;
 		var	y = sp.y;
-		x += 160;
-		y += 120;
+		x += this.width / 2;
+		y += this.height / 2;
 		return {
 			x: x,
 			y: y,
