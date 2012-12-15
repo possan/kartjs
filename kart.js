@@ -4,7 +4,8 @@
 		this.player = { x: 64, y: 64, direction: 0 };
 		this.width = 320;
 		this.height = 240;
-		this.fog = 1;
+		// this.fov = 90;
+		this.fog = 0.5;
 		this.texturepixels = [];
 	}
 
@@ -67,7 +68,7 @@
 	KartRenderer.prototype._project = function(p, head) {
 		var zmul = this.height / 2;
 		var zadd = 0;
-		var zzmul = 1;
+		var zzmul = 1;//  * this.fov / 90;
 
 		var mul = zmul / (zadd + p.z * zzmul);
 		var x = p.x * mul;
@@ -102,8 +103,8 @@
 
 	KartRenderer.prototype._rotateuv = function(uv, r) {
 		var a = r * Math.PI / 180.0;
-		var u2 = uv.u * Math.sin(a) - uv.v * Math.cos(a);
-		var v2 = uv.u * Math.cos(a) + uv.v * Math.sin(a);
+		var u2 = uv.u * Math.cos(a) - uv.v * Math.sin(a);
+		var v2 = uv.v * Math.cos(a) + uv.u * Math.sin(a);
 		return {
 			u: u2,
 			v: v2
@@ -120,13 +121,17 @@
 		var data = context.getImageData(0,0,this.width,this.height);
 		var lines = this.height / 2;
 		for (var i=0; i<lines; i++) {
-			// var inorm = i / lines;
-			var bri = 255 - i * 1;
+			var bri = 255 - 255 * i * this.fog / lines;
 			var y = this.height - i;
-			var uv0 = this._planeuv(-this.width / 2, lines-i, -this.height / 2, this.player.z);
+			var uvc = this._planeuv(0, lines-i, -this.height / 2, this.player.z);
+			// var uv0 = uvc;
+			// var uv1 = uvc;
+			// uv0 = this._rotateuv(uv0, -this.fov/2);
+			// uv1 = this._rotateuv(uv1, this.fov/2);
+		 	var uv0 = this._planeuv(-this.width / 2, lines-i, -this.height / 2, this.player.z);
 			var uv1 = this._planeuv(this.width / 2, lines-i, -this.height / 2, this.player.z);
-			uv0 = this._rotateuv(uv0, -this.player.direction-180);
-			uv1 = this._rotateuv(uv1, -this.player.direction-180);
+			uv0 = this._rotateuv(uv0, -this.player.direction-0);
+			uv1 = this._rotateuv(uv1, -this.player.direction-0);
 			uv0 = this._offsetuv(uv0, { u: this.player.x, v: this.player.y });
 			uv1 = this._offsetuv(uv1, { u: this.player.x, v: this.player.y });
 			this._texline(data, 0, y, this.width, uv0.u, uv0.v, uv1.u, uv1.v, bri);
